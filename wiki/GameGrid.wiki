@@ -1,0 +1,106 @@
+  {{{ 
+typedef struct GRID_SPOT
+      {
+      player *p;//player standing on
+      bool walk;//can walk over
+      bool shoot;//can shoot over
+      int item;//current item on ground here.
+      }space;
+
+//functions
+void initialize(float length, n length)// always centered at 0.0f, 0.0f, always square.
+Point* real_to_grid(float,float);//point structure is simple int x,y;
+void step_off(player *p, int gridloc_x,int gridloc_y);
+bool step_on(player *p, int gridloc_x,int gridloc_y);//true if successfully stepped there, false if collided
+     //and always attempt to step on before we step off.
+
+player * shoot(float heading, xpos, ypos);//don't know how to handle yet.
+
+I was thinking of making a giant 2d array of space pointers, when the grid is initialized to a specified length(float) and width(float) and number(int) to be subdivided by. The squares would be small enough for nice movement collision detection but not too small because we are going to move everything according to their 3d real values xpos, ypos and zpos. I think moving everybody along a grid would jump too much if it were to large and lag too much if it were too small.
+
+This leads us to using the function real_to_grid(float x, float y), alot.
+
+and for a player stepping on the grid we find its corresponding grid location, fill it with the correct values, and change some of the surrounding spaces to point to that original space, this'll kind of be like the shape or the player's shadow on the grid.
+
+    *
+  * * *
+* * P * *
+  * *  *
+    *
+
+}}}
+P is our player structure and all of the *'s point to P. the step off function knows the same shape and cleans up after it.
+
+and for shooting maybe we can just calculate the slope and trace the grid real fast so as to not mess with floating point location values.
+
+I don't have much code written on it, i'll upload it later. 
+
+
+
+{{{
+
+
+//globals float size, int units
+
+
+void real_to_grid(float xvalue, float zvalue, point* store)
+   {
+   float x = xvalue/size;
+   float z = zvalue/size;
+   
+   (*store).x = (int)x;
+   (*store).z = (int)z;                   
+   }
+
+
+bool step_on(player *p, float xpos, float zpos)//true if successfully stepped there, false if collided
+     //and always attempt to step on before we step off.
+     {
+     point gridpoint;
+     real_to_grid(xpos,zpos,&gridpoint);
+     if ( (gridpoint.x<0) || (gridpoint.z<0) ) || (gridpoint.x>=size) || (gridpoint.z>=size) )
+        return false;//out of bounds
+    
+    
+     if (!board[gridpoint.x][gridpoint.z].walk)
+        {//space is not walkable, collide.
+        return false;
+        }
+     else
+        {//space is walk-able, check for person
+        if (board[gridpoint.x][gridpoint.z].p==NULL)
+           {//nobody here
+           board[gridpoint.x][gridpoint.z].walk = false;//not walk-able
+           board[girdpoint.x][gridpoint.z].shoot = false;//not shoot-over-able
+           board[gridpoint.x][gridpoint.x].p = p;
+           return true;
+           }
+        else
+           {//player standing here, collide.
+           if ( (*board[gridpoint.x][gridpoint.z].p).id == (*p).id )   //we are stepping on ouselves, allow it so as not to collide
+              return true;
+           else
+              return false;
+           }
+        }
+     
+     }
+
+
+
+void step_off(player *p, float xpos, float zpos)
+   {//player was able to walk here so we are going to ASSUME:
+             // * it was within the grid
+             // * it was accessable terrain for players
+   
+   point gridpoint;
+   real_to_grid(xpos,zpos,&gridpoint);
+   
+   board[gridpoint.x][gridpoint.z].walk = true;
+   board[gridpoint.x][gridpoint.z].shoot = true;
+   board[gridpoint.x][gridpoint.z].player = NULL;
+   }
+   
+
+
+
